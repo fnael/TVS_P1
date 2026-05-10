@@ -1,0 +1,7 @@
+*.out
+*.profraw
+*.profdata
+harness_fuzz
+outputs/
+minimized/
+seeds/
