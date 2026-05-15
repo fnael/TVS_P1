@@ -1,0 +1,13 @@
+Error: memory error: null page access
+File: ../ex2/treetable.c
+Line: 393
+assembly.ll line: 479
+State: 1
+Stack: 
+	#000000479 in tree_min(table=139994333609984, n=139977153740800) at ../ex2/treetable.c:393
+	#100000432 in treetable_get_first_key(table=139994333609984, out=139498264887296) at ../ex2/treetable.c:200
+	#200001575 in main() at Ex3SymbTestSuite/treetable_get_first_key_symb.c:37
+Info: 
+	address: 32
+	next: object at 139488064339968 of size 4
+		MO62[4] allocated at main():  %returned = alloca i32, align 4
