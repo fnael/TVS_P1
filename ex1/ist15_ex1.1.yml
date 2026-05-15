@@ -1,0 +1,70 @@
+issues:
+  - id: 0
+    line: 71
+    type: NULLPTR_DEREFERENCE
+    status: true_positive
+    tools: infer, clang
+    comment: fields is allocated with malloc and not checked for NULL before dereference
+
+  - id: 1
+    line: 76
+    type: NULLPTR_DEREFERENCE
+    status: true_positive
+    tools: clang
+    comment: map is allocated with malloc and not checked before dereference
+
+  - id: 2
+    line: 76
+    type: USE_AFTER_FREE
+    status: true_positive
+    tools: clang
+    comment: free(map) can be executed if malloc fails
+
+  - id: 3
+    line: 120
+    type: NULLPTR_DEREFERENCE
+    status: true_positive
+    tools: infer
+    comment: entries is allocated with malloc and used in memcpy without NULL check
+
+  - id: 4
+    line: 124
+    type: BUFFER_OVERRUN
+    status: true_positive
+    tools: infer, clang
+    comment: malloc uses sizeof(key) where key is a char pointer, allocating only pointer-sized memory before strcpy copies the full string
+  
+  - id: 5
+    line: 125
+    type: NULLPTR_DEREFERENCE
+    status: true_positive
+    tools: infer, clang
+    comment: entry->key allocated with malloc without NULL check; also incorrect allocation size (sizeof pointer instead of string length)
+
+  - id: 6
+    line: 132
+    type: NULLPTR_DEREFERENCE
+    status: true_positive
+    tools: infer, clang
+    comment: val allocated with malloc and immediately used in memcpy without NULL check
+
+  - id: 7
+    line: 133
+    type: MEMORY_LEAK
+    status: true_positive
+    tools: infer
+    comment: previous field->entries allocation is overwritten by a new malloc without freeing the old buffer
+
+  - id: 8
+    line: 141
+    type: MEMORY_LEAK
+    status: true_positive
+    tools: infer
+    comment: realloc normally preserves or frees the original allocation; leak only occurs on allocation failure
+
+  - id: 9
+    line: 156
+    type: NULLPTR_DEREFERENCE
+    status: true_positive
+    tools: infer, clang
+    comment: val allocated with malloc and used in memcpy without NULL check

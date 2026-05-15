@@ -1,0 +1,232 @@
+  report:
+  - bug-1:
+    type: NULLPTR_DEREFERENCE
+    lineno: 39
+    class: FN
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_hash`, the parameter `str`
+      is passed directly to `strlen(str)` without checking
+      whether `str` is NULL.
+
+      Calling `hashmap_hash(NULL, ...)` dereferences a NULL pointer.
+
+  - bug-2:
+    type: NULLPTR_DEREFERENCE
+    lineno: 71
+    class: TP
+    description: |
+      Found with Infer and clang-analyzer.
+      In function `hashmap_new`, the pointer `fields` is allocated with
+      `malloc(sizeof(struct hashmap_field) * size)` and is dereferenced in
+      the following loop without returning or aborting when allocation fails.
+      If `malloc` returns NULL, the statement `struct hashmap_field *field = &fields[i]`
+      dereferences a NULL pointer.
+
+  - bug-3:
+    type: NULLPTR_DEREFERENCE
+    lineno: 76
+    class: TP
+    description: |
+      Found with clang-analyzer.
+      In function `hashmap_new`, the pointer `map` is allocated with
+      `malloc(sizeof(struct hashmap_s))` and immediately dereferenced through
+      `map->size = size` and `map->fields = fields` without checking whether
+      the allocation succeeded. If `malloc` returns NULL, a NULL pointer
+      dereference occurs.
+
+  - bug-4:
+    type: USE_AFTER_FREE
+    lineno: 76
+    class: TP
+    description: |
+      Found with clang-analyzer.
+      In function `hashmap_new`, if allocation of `fields` fails,
+      `free(map)` is executed, but the function continues execution and later
+      accesses `map->size` and `map->fields`. This causes a use-after-free
+      because `map` has already been freed.
+
+  - bug-5:
+    type: NULLPTR_DEREFERENCE
+    lineno: 100
+    class: FN
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_set`, the parameter `map`
+      is dereferenced through `map->size` and `map->fields`
+      without validating that `map` is non-NULL.
+
+      If `hashmap_new` fails and returns NULL,
+      calling `hashmap_set(map, ...)` dereferences a NULL pointer.
+
+  - bug-6:
+    type: NULLPTR_DEREFERENCE
+    lineno: 107
+    class: FN
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_set`, the code compares keys using:
+
+       strcmp(entry->key, key)
+
+      The parameter `key` is not validated before use.
+      If the caller passes NULL as `key`, `strcmp`
+      dereferences a NULL pointer.
+
+  - bug-7:
+    type: NULLPTR_DEREFERENCE
+    lineno: 120
+    class: TP
+    description: |
+      Found with Infer.
+      In function `hashmap_set`, the pointer `entries` is allocated with
+      `malloc(field->size * sizeof(struct hashmap_entry))` and is immediately
+      passed to `memcpy` without checking if allocation succeeded.
+      If `malloc` returns NULL, `memcpy` dereferences a NULL destination
+      pointer.
+  
+  - bug-8:
+    type: BUFFER_OVERRUN
+    lineno: 120
+    class: 
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_set`, the code performs:
+        memcpy(entries, field->entries,
+                (field->size - 1) * sizeof(struct hashmap_entry));
+      even when `field->entries` may be NULL.
+      While copying zero bytes is valid, if inconsistent state causes
+      `field->size > 1` while `field->entries == NULL`,
+      memcpy reads from an invalid source buffer, leading to
+      invalid memory access or buffer overread.
+  
+  - bug-9:
+    type: UNINITIALIZED_VARIABLE
+    lineno: 123
+    class: FN
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_set`, the pointer `entries`
+      returned by `malloc` is used to compute:
+
+        entry = &entries[field->size - 1];
+
+      without checking whether allocation succeeded.
+
+      If `malloc` returns NULL, pointer arithmetic is
+      performed on a NULL pointer and subsequent accesses
+      through `entry` dereference invalid memory.
+
+  - bug-10:
+    type: BUFFER_OVERRUN
+    lineno: 124
+    class: TP
+    description: |
+      Found with Infer and clang-analyzer.
+      In function `hashmap_set`, memory for `entry->key` is allocated using
+      `malloc(sizeof(key))`. Since `key` is a `char *`, this allocates only
+      enough memory for a pointer instead of the full string.
+      The subsequent call to `strcpy(entry->key, key)` may write beyond the
+      allocated buffer, causing a heap buffer overflow.
+
+  - bug-11:
+    type: BUFFER_OVERRUN
+    lineno: 124
+    class: TP
+    description: |
+      Found with Infer and clang-analyzer.
+      In function `hashmap_set`, memory for `entry->key` is allocated using
+      `malloc(sizeof(key))`. Since `key` is a `char *`, this allocates only
+      enough memory for a pointer instead of the full string.
+      The subsequent call to `strcpy(entry->key, key)` may write beyond the
+      allocated buffer, causing a heap buffer overflow.
+
+  - bug-12:
+    type: NULLPTR_DEREFERENCE
+    lineno: 125
+    class: TP
+    description: |
+      Found with Infer and clang-analyzer.
+      In function `hashmap_set`, the allocation
+      `entry->key = (char *)malloc(sizeof(key))` is not checked for NULL
+      before calling `strcpy(entry->key, key)`.
+      If `malloc` fails, `strcpy` dereferences a NULL pointer.
+      Additionally, the allocation size is incorrect because `sizeof(key)`
+      only allocates pointer-sized memory.
+
+  - bug-13:
+    type: NULLPTR_DEREFERENCE
+    lineno: 132
+    class: TP
+    description: |
+      Found with Infer and clang-analyzer.
+      In function `hashmap_set`, the pointer `val` is allocated with
+      `malloc(length)` and immediately passed to `memcpy` without checking
+      whether allocation succeeded.
+      If `malloc` returns NULL, `memcpy` dereferences a NULL destination
+      pointer.
+
+  - bug-14:
+    type: MEMORY_LEAK
+    lineno: 133
+    class: TP
+    description: |
+      Found with Infer.
+      In function `hashmap_set`, the field `field->entries` may already
+      contain a previously allocated array. A new buffer is allocated into
+      `entries` and assigned to `field->entries` without freeing the old
+      allocation first.
+      This overwrites the previous pointer and leaks the original memory.
+
+  - bug-15:
+    type: MEMORY_LEAK
+    lineno: 141
+    class: TP
+    description: |
+      Not correctly identified by the tools.
+      In function `hashmap_set`, the return value of `realloc`
+      is assigned directly to `field->entries`.
+
+      If `realloc` fails, NULL is returned while the original
+      allocation remains valid. Because the original pointer is
+      overwritten immediately, the old allocation becomes
+      unreachable, causing a memory leak.
+    
+  - bug-16:
+    type: NULLPTR_DEREFERENCE
+    lineno: 148
+    class: FN
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_get`, the parameter `map`
+      is dereferenced through `map->size` and `map->fields`
+      without checking whether `map` is NULL.
+
+      If `hashmap_new` fails and returns NULL,
+      calling `hashmap_get(map, ...)` causes a NULL pointer dereference.
+
+  - bug-17:
+    type: NULLPTR_DEREFERENCE
+    lineno: 153
+    class: FN
+    description: |
+      Not found by Infer or clang-analyzer.
+      In function `hashmap_get`, the code calls:
+
+        strcmp(entry->key, key)
+
+      without checking whether `key` is NULL.
+
+      Passing a NULL key causes a NULL pointer dereference
+      inside `strcmp`.
+
+  - bug-18:
+    type: NULLPTR_DEREFERENCE
+    lineno: 156
+    class: TP
+    description: |
+      Found with Infer and clang-analyzer.
+      In function `hashmap_get`, the pointer `val` is allocated with
+      `malloc(entry->len)` and immediately used as the destination of
+      `memcpy` without checking if allocation succeeded.
+      If `malloc` returns NULL, `memcpy` dereferences a NULL pointer.
